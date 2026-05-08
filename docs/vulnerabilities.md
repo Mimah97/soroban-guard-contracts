@@ -234,6 +234,57 @@ env.storage().persistent().extend_ttl(&key, threshold, extend_to); // ✅ renew 
 
 ---
 
+## 7. Ignored Return Value from Sub-Call (`ignored_return`)
+
+**Contract:** `vulnerable/ignored_return` → secure mirror in `vulnerable/ignored_return/src/secure.rs`
+
+### What it is
+
+When a Soroban contract invokes another contract and wraps the call in
+`let _ = ...`, the return value and any non-panicking error are silently
+discarded. The calling contract continues as if the operation succeeded,
+leading to inconsistent state — e.g. crediting a user or marking an escrow
+as released after a token transfer that actually failed.
+
+### Vulnerable code
+
+```rust
+pub fn release(env: Env) {
+    // ...
+    // ❌ Return value ignored — if token transfer fails, escrow still marks as released
+    let _ = token_interface::TokenClient::new(&env, &token_id)
+        .transfer(&env.current_contract_address(), &recipient, &amount);
+
+    // State updated unconditionally — funds may never have moved.
+    env.storage().persistent().set(&DataKey::Released, &true);
+}
+```
+
+### Secure fix
+
+```rust
+pub fn release(env: Env) {
+    // ...
+    // ✅ Call transfer directly — no `let _ = ...`.
+    //    A panicking token contract rolls back the entire transaction,
+    //    so Released is never set to true unless the transfer succeeds.
+    token_interface::TokenClient::new(&env, &token_id)
+        .transfer(&env.current_contract_address(), &recipient, &amount);
+
+    env.storage().persistent().set(&DataKey::Released, &true);
+}
+```
+
+### Impact
+
+- Escrow permanently locked: the escrow is marked released but the recipient
+  never receives funds. The funds are stuck with no way to reset the flag.
+- More broadly, any state update that follows an ignored sub-call can be
+  applied even when the underlying operation failed, breaking invariants.
+- Severity: **High**
+
+---
+
 ## General Soroban Security Checklist
 
 | Check                               | Description                                                                                              |
