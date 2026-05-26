@@ -37,6 +37,7 @@ members = [
     "vulnerable/unsafe_storage",
     "vulnerable/unbounded_storage",
     "vulnerable/zero_deposit",
+    "vulnerable/rebasing_token_accounting",
     "vulnerable/reentrancy",
     "vulnerable/replay_attack",
     "vulnerable/dust_griefing",
