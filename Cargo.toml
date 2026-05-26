@@ -76,6 +76,10 @@ members = [
     "vulnerable/expired_delegation",
     "vulnerable/uncapped_supply",
     "vulnerable/silent_admin_change",
+    "vulnerable/empty_vault_share_inflation",
+    "vulnerable/vault_donation_accounting",
+    "vulnerable/fee_precision_loss",
+    "vulnerable/assumed_token_decimals",
 ]
 
 [workspace.dependencies]
