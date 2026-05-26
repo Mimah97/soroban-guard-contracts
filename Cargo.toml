@@ -20,6 +20,7 @@ members = [
     "vulnerable/missing_escrow_auth",
     "vulnerable/missing_events",
     "vulnerable/missing_ttl",
+    "vulnerable/merkle_leaf_missing_amount",
     "vulnerable/negative_transfer",
     "vulnerable/near_overflow_input",
     "vulnerable/no_slippage",
@@ -80,6 +81,7 @@ members = [
     "vulnerable/mixed_collateral_decimals",
     "vulnerable/signed_unsigned_wrap",
     "vulnerable/abs_min_overflow",
+    "vulnerable/flash_repay_wrong_token",
 ]
 
 [workspace.dependencies]
