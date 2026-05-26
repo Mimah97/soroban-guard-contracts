@@ -80,6 +80,7 @@ members = [
     "vulnerable/mixed_collateral_decimals",
     "vulnerable/signed_unsigned_wrap",
     "vulnerable/abs_min_overflow",
+    "vulnerable/unwrap_without_burn",
 ]
 
 [workspace.dependencies]
