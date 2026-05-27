@@ -1308,6 +1308,114 @@ state or blocking legitimate callers.
 
 ---
 
+## 7. Ignored Return Value from Sub-Call (`ignored_return`)
+
+**Contract:** `vulnerable/ignored_return` → secure mirror in `vulnerable/ignored_return/src/secure.rs`
+
+### What it is
+
+When a Soroban contract invokes another contract and wraps the call in
+`let _ = ...`, the return value and any non-panicking error are silently
+discarded. The calling contract continues as if the operation succeeded,
+leading to inconsistent state — e.g. crediting a user or marking an escrow
+as released after a token transfer that actually failed.
+
+### Vulnerable code
+
+```rust
+pub fn release(env: Env) {
+    // ...
+    // ❌ Return value ignored — if token transfer fails, escrow still marks as released
+    let _ = token_interface::TokenClient::new(&env, &token_id)
+        .transfer(&env.current_contract_address(), &recipient, &amount);
+
+    // State updated unconditionally — funds may never have moved.
+    env.storage().persistent().set(&DataKey::Released, &true);
+}
+```
+
+### Secure fix
+
+```rust
+pub fn release(env: Env) {
+    // ...
+    // ✅ Call transfer directly — no `let _ = ...`.
+    //    A panicking token contract rolls back the entire transaction,
+    //    so Released is never set to true unless the transfer succeeds.
+    token_interface::TokenClient::new(&env, &token_id)
+        .transfer(&env.current_contract_address(), &recipient, &amount);
+
+    env.storage().persistent().set(&DataKey::Released, &true);
+}
+```
+
+### Impact
+
+- Escrow permanently locked: the escrow is marked released but the recipient
+  never receives funds. The funds are stuck with no way to reset the flag.
+- More broadly, any state update that follows an ignored sub-call can be
+  applied even when the underlying operation failed, breaking invariants.
+- Severity: **High**
+
+---
+
+## 8. Predictable Randomness / Front-Running (`weak_randomness`)
+
+**Contract:** `vulnerable/weak_randomness` → secure mirror in `vulnerable/weak_randomness/src/secure.rs`
+
+### What it is
+
+Contracts that derive randomness from `env.ledger().sequence()` or
+`env.ledger().timestamp()` are fully predictable. Both values are public
+information visible to every network participant before a transaction is
+included. Validators can choose which ledger to include a transaction on;
+sophisticated users can watch the mempool and submit at the exact moment
+the sequence number maps to their address.
+
+### Vulnerable code
+
+```rust
+pub fn pick_winner(env: Env) -> Address {
+    let participants: Vec<Address> = /* ... */;
+    // ❌ Ledger sequence is known in advance — validators can time their entry
+    let idx = (env.ledger().sequence() as u32) % (participants.len() as u32);
+    participants.get(idx).unwrap()
+}
+```
+
+### Secure fix (commit-reveal)
+
+```rust
+// Phase 1 — each participant commits hash(secret_nonce)
+pub fn commit(env: Env, participant: Address, commitment: BytesN<32>) { /* ... */ }
+
+// Phase 2 — each participant reveals their secret_nonce
+pub fn reveal(env: Env, participant: Address, secret_nonce: u64) {
+    // ✅ Verify hash(revealed) == committed, then XOR into shared seed
+}
+
+// Phase 3 — derive winner from XOR seed once all have revealed
+pub fn draw(env: Env) -> Address {
+    let seed: u64 = /* XOR of all revealed nonces */;
+    // ✅ No single party could bias the seed without seeing all others' secrets
+    let idx = (seed % participants.len() as u64) as u32;
+    participants.get(idx).unwrap()
+}
+```
+
+For production, a **VRF oracle** provides the strongest guarantee: provably
+unbiased randomness with an on-chain verifiable proof.
+
+### Impact
+
+- Lottery / NFT mint manipulation: a validator or well-timed participant can
+  guarantee they win every draw.
+- Any randomness-dependent outcome (airdrops, game results, shuffles) is
+  equally vulnerable.
+- Severity: **High**
+
+---
+
 ## General Soroban Security Checklist
 
 | Check | Description |

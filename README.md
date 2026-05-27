@@ -88,6 +88,8 @@ soroban-guard-contracts/
 | [`zero_admin`](./vulnerable/zero_admin/README.md) | Admin contract | Admin set to zero address — contract permanently locked |
 | [`zero_deposit`](./vulnerable/zero_deposit/README.md) | Vault contract | Zero-value deposit accepted — storage griefing |
 | [`zero_stake`](./vulnerable/zero_stake/README.md) | Staking contract | Zero-value stake accepted — division-by-zero risk |
+| [`reward_debt_not_updated`](./vulnerable/reward_debt_not_updated/README.md) | Staking contract | `claim_rewards` never updates reward debt — same rewards claimable repeatedly |
+| [`reward_checkpoint_missing`](./vulnerable/reward_checkpoint_missing/README.md) | Staking contract | `stake` omits reward checkpoint — late depositors steal historical rewards |
 
 ### Secure
 
@@ -105,7 +107,8 @@ Supports full scan history per contract.
 ```
 submit_scan(scanner, contract_address, findings_hash, severity_counts)
 get_scan(contract_address) -> Option<ScanResult>
-get_history(contract_address) -> Vec<ScanResult>
+get_history_page(contract_address, offset, limit) -> Vec<ScanResult>  // limit capped at 50
+get_history_len(contract_address) -> u32
 ```
 
 ---
@@ -236,12 +239,14 @@ stellar contract invoke \
   -- get_scan \
   --contract_address <scanned-contract-address>
 
-# Full history
+# History page (offset=0, limit=50)
 stellar contract invoke \
   --id $REGISTRY_ID \
   --network testnet \
-  -- get_history \
-  --contract_address <scanned-contract-address>
+  -- get_history_page \
+  --contract_address <scanned-contract-address> \
+  --offset 0 \
+  --limit 50
 ```
 
 ### 8. Deploy a vulnerable contract (for scanner testing)
@@ -292,7 +297,7 @@ flowchart TD
             S2[protected_admin]
         end
 
-        REG["registry\nsubmit_scan()\nget_scan()\nget_history()"]
+        REG["registry\nsubmit_scan()\nget_scan()\nget_history_page()"]
     end
 
     CLI["soroban-guard-core\n(off-chain scanner CLI)"]
@@ -342,6 +347,8 @@ flowchart TD
 | `zero_stake` | Zero-value stake | _(inline `secure.rs`)_ | Guard `amount > 0` |
 | `timestamp_lock` | Timestamp manipulation | `secure/sequence_lock` | Ledger sequence instead of timestamp |
 | `missing_events` | No events emitted | — | Emit structured events |
+| `reward_debt_not_updated` | Reward debt not updated | _(inline `secure.rs`)_ | Update debt after payout |
+| `reward_checkpoint_missing` | Reward checkpoint missing | _(inline `secure.rs`)_ | Snapshot accumulator on deposit |
 
 ### Useful links
 
