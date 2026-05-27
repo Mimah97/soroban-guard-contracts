@@ -4,6 +4,7 @@ members = [
     "vulnerable/admin_rugpull",
     "vulnerable/allowance_not_decremented",
     "vulnerable/call_depth",
+    "vulnerable/delegate_signer_mismatch",
     "vulnerable/div_by_zero",
     "vulnerable/double_claim",
     "vulnerable/dust_griefing",
