@@ -87,6 +87,10 @@ members = [
     "vulnerable/signed_unsigned_wrap",
     "vulnerable/abs_min_overflow",
     "vulnerable/negative_oracle_price",
+    "vulnerable/nft_operator_collection_mixup",
+    "vulnerable/royalty_recipient_mutable",
+    "vulnerable/canceled_listing_fillable",
+    "vulnerable/seller_self_purchase",
 ]
 
 [workspace.dependencies]
