@@ -1,6 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
+    "vulnerable/abs_min_overflow",
+    "vulnerable/accept_admin_missing_auth",
     "vulnerable/admin_rugpull",
     "vulnerable/allowance_not_decremented",
     "vulnerable/call_depth",
@@ -85,7 +87,6 @@ members = [
     "vulnerable/oracle_price_scale_mismatch",
     "vulnerable/mixed_collateral_decimals",
     "vulnerable/signed_unsigned_wrap",
-    "vulnerable/abs_min_overflow",
     "vulnerable/negative_oracle_price",
     "vulnerable/stale_pending_admin",
 ]

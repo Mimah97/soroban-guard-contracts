@@ -48,6 +48,7 @@ soroban-guard-contracts/
 
 | Crate | Context | Vulnerability |
 |---|---|---|
+| [`accept_admin_missing_auth`](./vulnerable/accept_admin_missing_auth/README.md) | Admin contract | `accept_admin()` never calls `require_auth` — anyone can finalise the transfer |
 | [`missing_auth`](./vulnerable/missing_auth/README.md) | Token contract | `transfer()` mutates balances without `require_auth()` |
 | [`missing_ttl`](./vulnerable/missing_ttl/README.md) | Token contract | Persistent balances expire because the contract never calls `extend_ttl()` |
 | [`unchecked_math`](./vulnerable/unchecked_math/README.md) | Staking contract | Reward calc uses raw `*` on `u64` — overflows silently |

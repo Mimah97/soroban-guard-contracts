@@ -1461,6 +1461,49 @@ contract, gaining access to all admin-gated functions.
 
 ---
 
+## 35. Missing `accept_admin` Auth (`accept_admin_missing_auth`)
+
+**Contract:** `vulnerable/accept_admin_missing_auth` → `vulnerable/accept_admin_missing_auth/src/secure.rs`
+**Severity:** Critical
+
+### What it is
+
+A two-step admin transfer contract where `accept_admin()` reads the pending
+admin from storage and promotes them — but **never calls `require_auth()`**.
+Any address can finalise the transfer without the pending admin's knowledge
+or consent, enabling an attacker to seize admin privileges.
+
+### Vulnerable pattern
+
+```rust
+pub fn accept_admin(env: Env) {
+    let pending: Address = env.storage().persistent().get(&DataKey::PendingAdmin).expect("no pending admin");
+    // ❌ Missing: pending.require_auth();
+    env.storage().persistent().set(&DataKey::Admin, &pending);
+    env.storage().persistent().remove(&DataKey::PendingAdmin);
+}
+```
+
+### Secure fix
+
+```rust
+pub fn accept_admin(env: Env) {
+    let pending: Address = env.storage().persistent().get(&SecureDataKey::PendingAdmin).expect("no pending admin");
+    // ✅ Require the pending admin to sign before promoting them.
+    pending.require_auth();
+    env.storage().persistent().set(&SecureDataKey::Admin, &pending);
+    env.storage().persistent().remove(&SecureDataKey::PendingAdmin);
+}
+```
+
+### Impact
+
+Privilege escalation: a random caller can finalise a pending admin transfer
+without the pending address's authorisation, gaining full admin control over
+the contract.
+
+---
+
 ## General Soroban Security Checklist
 
 | Check | Description |
