@@ -90,6 +90,7 @@ members = [
     "vulnerable/borrow_without_accrual",
     "vulnerable/interest_index_reset",
     "vulnerable/flash_receiver_unchecked",
+    "vulnerable/deposit_cap_wrong_amount",
 ]
 
 [workspace.dependencies]
