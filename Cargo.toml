@@ -1,6 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
+    "vulnerable/abs_min_overflow",
+    "vulnerable/accept_admin_missing_auth",
     "vulnerable/admin_rugpull",
     "vulnerable/allowance_not_decremented",
     "vulnerable/call_depth",
