@@ -94,6 +94,7 @@ members = [
     "vulnerable/sequence_as_timestamp",
     "vulnerable/balance_key_missing_user",
     "vulnerable/report_hash_unbound_contract",
+    "vulnerable/caller_supplied_ledger",
 ]
 
 
