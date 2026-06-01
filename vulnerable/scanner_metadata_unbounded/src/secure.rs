@@ -1,9 +1,9 @@
 //! SECURE: Scanner Registry with Metadata Size Enforcement
 //!
 //! FIXES APPLIED:
-//! 1. `register_scanner` asserts `metadata.len() <= MAX_METADATA_LEN` before
-//!    writing to storage, preventing unbounded storage growth.
-//! 2. Empty metadata is rejected — callers must supply a non-empty string.
+//! 1. `register_scanner` rejects empty metadata — callers must supply a meaningful value.
+//! 2. `register_scanner` asserts `metadata.len() <= MAX_METADATA_LEN` before writing
+//!    to storage, preventing unbounded storage growth and ledger rent inflation.
 
 use super::{DataKey, MAX_METADATA_LEN};
 use soroban_sdk::{contract, contractimpl, Address, Env, String};
@@ -21,8 +21,8 @@ impl SecureScannerRegistry {
     pub fn register_scanner(env: Env, scanner: Address, metadata: String) {
         scanner.require_auth();
 
-        // ✅ FIX 1: Reject empty metadata — callers must supply a meaningful value.
-        assert!(metadata.len() > 0, "metadata must not be empty");
+        // ✅ FIX 1: Reject empty metadata.
+        assert!(metadata.len() != 0, "metadata must not be empty");
 
         // ✅ FIX 2: Enforce maximum length to prevent storage bloat attacks.
         assert!(
