@@ -146,3 +146,5 @@ mod tests {
         assert_eq!(client.balance(&bob), 300);
     }
 }
+
+pub mod secure;
